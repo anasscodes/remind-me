@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppointmentController;
+use Illuminate\Support\Facades\Auth;
 
 
 
@@ -55,5 +56,27 @@ Route::get('/notifications/latest', function () {
     return response()->json($notifications);
 
 })->middleware('auth');
+
+Route::get('/notifications/latest', function () {
+
+    $user = Auth::user();
+
+    $notifications = $user->unreadNotifications()
+        ->latest()
+        ->take(5)
+        ->get()
+        ->map(function ($n) {
+            return [
+                'id' => $n->id,
+                'message' => $n->data['title'],
+                'time' => $n->data['time'],
+            ];
+        });
+
+    return response()->json([
+        'notifications' => $notifications,
+        'count' => $user->unreadNotifications()->count()
+    ]);
+});
 
 require __DIR__.'/auth.php';
